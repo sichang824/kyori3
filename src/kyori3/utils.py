@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import ast
-import inspect
 
 
 def safe_eval(s):

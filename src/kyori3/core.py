@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from log import logger
+from kyori3.log import logger
 
 __RPC_FUNCTIONS = {}
 
@@ -48,4 +48,7 @@ def __import(fn, version):
 def call(fn, args, kwargs, version):
     func = __import(fn, version)
     if not func: raise NameError(fn)
-    return func(*args, **kwargs)
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        return e

@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os, sys
+
+sys.path.insert(0, os.getcwd() + "/src")
+
 import ssl
 import unittest
-from client import HTTPClient, HTTPSClient
-from constant import RPC_SSL, RPC_SSL_KEY_FILE, RPC_SSL_CERT_FILE
+from kyori3.client import HTTPClient, HTTPSClient
+from kyori3.constant import RPC_SSL, RPC_SSL_KEY_FILE, RPC_SSL_CERT_FILE
 
 if RPC_SSL:
     # ssap: 123456
@@ -90,10 +94,14 @@ class Test(unittest.TestCase):
         assert client.rcall("test_add", 1, 2) == 3
         assert client.rcall("test_add", 2, 2) == 4
 
+    def test_class(self):
+        assert client.rcall("test_class", 1, 2) == 3
+
 
 def main():
     unittest.TestLoader.sortTestMethodsUsing = None
     unittest.main(argv=['ignored', '-v'], exit=False)
+    # unittest.main(argv=['ignored', '-v',"Test.test_class"], exit=False)
 
 
 if __name__ == "__main__":

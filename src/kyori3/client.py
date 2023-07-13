@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from pydoc import locate
 from http import HTTPStatus
 from http.client import HTTPSConnection, HTTPConnection
 
@@ -28,6 +29,7 @@ class BaseClient(object):
         try:
             self.request(method, RPC_URL_ENDPOINT, payload, headers)
             resp = self.getresponse()
+
         except ConnectionRefusedError:
             msg = "Failed to connect to the server, maybe the server is not ready."
             logger.error(msg)
@@ -37,6 +39,7 @@ class BaseClient(object):
             logger.error(msg)
             raise ConnectionResetError(msg)
 
+        resp.close()
         return resp
 
     def __gen_headers(self, **kwargs):
@@ -56,6 +59,18 @@ class BaseClient(object):
 
         return str((fn, args, kwargs)).encode()
 
+    def __parse_resp(self, resp):
+        content_type = resp.getheader("Content-type", None)
+        _type = locate(content_type.lstrip("raw/"))
+
+        if issubclass(_type, Exception):
+            raise _type(resp.reason)
+
+        if content_type and content_type.startswith(RPC_CONTENT_TYPE_HEADER):
+            return safe_eval(resp.reason)
+        else:
+            return resp.reason
+
     def function(self, *args, **kwargs):
         fn = self.FN_CACHE
         self.FN_CACHE = ""
@@ -65,14 +80,7 @@ class BaseClient(object):
             payload,
             self.__gen_headers(),
         )
-        content_type = resp.getheader("Content-type", None)
-        if content_type and content_type.startswith(RPC_CONTENT_TYPE_HEADER):
-            # _type = content_type.lstrip("raw/")
-            value = safe_eval(resp.reason)
-        else:
-            value = resp.reason
-
-        return value
+        return self.__parse_resp(resp)
 
     def __getattr__(self, fn):
         """ 

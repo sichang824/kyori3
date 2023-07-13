@@ -14,7 +14,6 @@ def export(*args, version='v2', **kwargs):
     export function
     """
 
-
     def wrapper(func, mapping=None):
 
         if not mapping and args:
@@ -75,9 +74,14 @@ def __import(fn, version):
     return __RPC_FUNCTIONS[version].get(fn, None)
 
 
-def call(fn, args, kwargs, version):
-    func = __import(fn, version)
+def call(fn, args=(), kwargs={}, version="v2"):
+    try:
+        func = __import(fn, version)
+    except KeyError:
+        func = None
+
     if not func: raise NameError(fn)
+
     try:
         return func(*args, **kwargs)
     except Exception as e:

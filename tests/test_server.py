@@ -10,7 +10,41 @@ from kyori3.server import Server
 app = Server(drowssap='123456')
 
 
-@export(mapping='test_mapping')
+@export()
+def test(a, b):
+    print(a + b)
+
+
+@export("test8")
+def test(a, b):
+    print(a + b)
+
+
+@export(mapping="test9")
+def test(a, b):
+    print(a + b)
+
+
+def test1():
+    pass
+
+
+def test2():
+    pass
+
+
+def test3():
+    pass
+
+
+export(test1)
+export(test2, test3)
+export({"test4": test1})
+export(test5=test2)
+export(test6=test2, test7=test2)
+
+
+@export('test_mapping')
 def test_add(a, b):
     return a + b
 

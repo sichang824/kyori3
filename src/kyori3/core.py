@@ -74,7 +74,10 @@ def __import(fn, version):
     return __RPC_FUNCTIONS[version].get(fn, None)
 
 
-def call(fn, args=(), kwargs={}, version="v2"):
+def call(fn, args=(), kwargs={}, version=None):
+    if not version:
+        version = 'v2'
+
     try:
         func = __import(fn, version)
     except KeyError:

@@ -108,5 +108,10 @@ class TestInclude(RPCFunctions):
         return a + b
 
 
+@app.api_route(path='/test_api')
+def test_api():
+    return {"PING": "OK"}
+
+
 if __name__ == "__main__":
     app.serve()

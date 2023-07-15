@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import json
 import ssl
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
@@ -13,6 +14,7 @@ from kyori3.constant import (
     RPC_SSL,
     RPC_SSL_KEY_FILE,
     RPC_SSL_CERT_FILE,
+    RPC_URL_ENDPOINT,
 )
 
 __all__ = ['Server']
@@ -26,9 +28,12 @@ class ServerHandler(BaseHTTPRequestHandler):
         self.send_header('Content-type', _type_str)
 
     def __set_headers(self, _type=str, **kwargs):
-        for kwarg, value in kwargs:
+        if not 'content_type' in kwargs:
+            self.__set_content_type(_type)
+        for kwarg, value in kwargs.items():
+            kwarg = kwarg.replace('_', '-')
+            kwarg = kwarg.capitalize()
             self.send_header(kwarg, value)
-        self.__set_content_type(_type)
         self.end_headers()
 
     def __get_payload(self):
@@ -52,19 +57,36 @@ class ServerHandler(BaseHTTPRequestHandler):
             self.send_response(HTTPStatus.NOT_FOUND)
         self.__set_headers()
 
-    def do_POST(self, ):
+    def do_POST(self):
         """
         Get function to execute
         """
-        func, args, kwargs = self.__parse_payload()
-        logger.info(f"Execute function: {func}({args},{kwargs})")
-        result = call(func, args, kwargs, self.__get_rpc_version())
-
-        self.send_response(HTTPStatus.OK, result)
-        self.__set_headers(type(result))
+        if self.path in RPC_URL_ENDPOINT:
+            try:
+                func, args, kwargs = self.__parse_payload()
+            except Exception:
+                self.send_response(
+                    HTTPStatus.BAD_REQUEST,
+                    'RPC server requires pyload, please check the request body.'
+                )
+                self.__set_headers()
+            else:
+                logger.info(f"Execute function: {func}({args},{kwargs})")
+                result = call(func, args, kwargs, self.__get_rpc_version())
+                self.send_response(HTTPStatus.OK, result)
+                self.__set_headers(type(result))
+        else:
+            if not self.path in self.server.ROUTES:
+                self.send_response(HTTPStatus.NOT_FOUND)
+            else:
+                data = json.dumps(self.server.ROUTES[self.path]())
+                self.send_response(HTTPStatus.OK, data)
+            self.__set_headers(content_type='application/json; charset=utf-8')
 
 
 class Server(object):
+
+    ROUTES = {}
 
     def __init__(
         self,
@@ -83,8 +105,25 @@ class Server(object):
         self.cert_file = cert_file or RPC_SSL_CERT_FILE
         self.ssap = drowssap
 
+    def api_route(self, path):
+        """
+        route function
+        """
+
+        def wrapper(func):
+
+            self.ROUTES.update({path: func})
+
+            def inner(*args, **kwargs):
+                return func(*args, **kwargs)
+
+            return inner
+
+        return wrapper
+
     def serve(self):
         server = ThreadingHTTPServer(self.addr, self.handler)
+        server.ROUTES = self.ROUTES
 
         if all([self.securely, self.key_file, self.cert_file]):
             logger.debug(f"Load ssl: {self.key_file} {self.cert_file}")

@@ -53,6 +53,10 @@ def test_add(a, b):
 def test_add(a, b):
     return a + b
 
+@export()
+def test_add(a, b):
+    return a + b
+
 
 @export()
 def test_str(d):

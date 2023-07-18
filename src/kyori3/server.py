@@ -5,7 +5,7 @@ import ssl
 from http import HTTPStatus
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 
-from kyori3.log import logger
+from kyori3.log import logger, LogRawStrings as lrs
 from kyori3.utils import safe_eval
 from kyori3.core import call, inspect
 
@@ -24,7 +24,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def __set_content_type(self, _type):
         _type_str = RPC_CONTENT_TYPE_HEADER + _type.__name__
-        logger.info(f"Set Content-type: {_type_str}")
+        logger.debug(lrs.type_setting, _type_str)
         self.send_header('Content-type', _type_str)
 
     def __set_headers(self, _type=str, **kwargs):
@@ -50,7 +50,7 @@ class ServerHandler(BaseHTTPRequestHandler):
 
     def do_HEAD(self):
         fn = self.__get_payload()
-        logger.info(f"Head function: {fn}")
+        logger.info(lrs.heading, fn)
         if inspect(fn, self.__get_rpc_version()):
             self.send_response(HTTPStatus.OK)
         else:
@@ -65,14 +65,12 @@ class ServerHandler(BaseHTTPRequestHandler):
             try:
                 func, args, kwargs = self.__parse_payload()
             except Exception:
-                self.send_response(
-                    HTTPStatus.BAD_REQUEST,
-                    'RPC server requires pyload, please check the request body.'
-                )
+                self.send_response(HTTPStatus.BAD_REQUEST, lrs.no_payload)
                 self.__set_headers()
             else:
-                logger.info(f"Execute function: {func}({args},{kwargs})")
+                logger.info(lrs.execute, func, args, kwargs)
                 result = call(func, args, kwargs, self.__get_rpc_version())
+                logger.debug(lrs.result, result)
                 self.send_response(HTTPStatus.OK, result)
                 self.__set_headers(type(result))
         else:
@@ -126,7 +124,7 @@ class Server(object):
         server.ROUTES = self.ROUTES
 
         if all([self.securely, self.key_file, self.cert_file]):
-            logger.debug(f"Load ssl: {self.key_file} {self.cert_file}")
+            logger.debug(lrs.load_ssl, self.key_file, self.cert_file)
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
             if self.ssap:
                 ctx.load_cert_chain(self.cert_file, self.key_file, self.ssap)
@@ -135,6 +133,6 @@ class Server(object):
 
             server.socket = ctx.wrap_socket(server.socket, server_side=True)
 
-        logger.info(f"Server start on: {self.addr}")
+        logger.info(lrs.server_starting, self.addr)
         server.serve_forever()
-        logger.info("Server shutdown.")
+        logger.info(lrs.server_shutdown)

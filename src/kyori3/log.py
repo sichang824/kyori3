@@ -46,5 +46,24 @@ LOGGING = {
 }
 
 
+class LogRawStrings:
+    exported = '%s has already exported and will be ignored.'
+    exporting = "Function exporting: %s %s %s"
+
+    heading = "Head Function: %s"
+    execute = "Execute function: %s(%s, %s)"
+    result = "Execute result: %s"
+
+    load_ssl = "Loading SSL: %s %s"
+    server_starting = "Server start at: %s"
+    server_shutdown = "Server shutdown."
+
+    type_setting = "Setting Content-type: %s"
+    no_payload = "RPC server requires pyload, please check the request body."
+
+    refused = "Failed to connect to the server, maybe the server is not ready."
+    reset = "Failed to connect to the server, try ssl connection."
+
+
 logging.config.dictConfig(LOGGING)
 logger = logging.getLogger("rpc")

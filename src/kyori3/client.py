@@ -5,7 +5,7 @@ from pydoc import locate
 from http import HTTPStatus
 from http.client import HTTPSConnection, HTTPConnection
 
-from kyori3.log import logger
+from kyori3.log import logger, LogRawStrings as lrs
 from kyori3.utils import safe_eval, check_callable
 
 from kyori3.constant import (
@@ -31,13 +31,11 @@ class BaseClient(object):
             resp = self.getresponse()
 
         except ConnectionRefusedError:
-            msg = "Failed to connect to the server, maybe the server is not ready."
-            logger.error(msg)
-            raise ConnectionResetError(msg)
+            logger.error(lrs.refused)
+            raise ConnectionResetError(lrs.refused)
         except ConnectionResetError:
-            msg = "Failed to connect to the server, try ssl connection."
-            logger.error(msg)
-            raise ConnectionResetError(msg)
+            logger.error(lrs.reset)
+            raise ConnectionResetError(lrs.reset)
 
         resp.close()
         return resp

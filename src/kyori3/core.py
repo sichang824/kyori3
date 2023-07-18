@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 
 from kyori3.utils import check_callable
-from kyori3.log import logger
+from kyori3.log import logger, LogRawStrings
+import gettext
 
 __RPC_FUNCTIONS = {}
 
 __all__ = ['export', 'call', 'inspect', 'RPCFunctions']
+
+_ = gettext.gettext
 
 
 def export(*args, version='v2', **kwargs):
@@ -27,12 +30,11 @@ def export(*args, version='v2', **kwargs):
 
         if not version in __RPC_FUNCTIONS:
             __RPC_FUNCTIONS.update({version: {}})
-
+        logger.debug(LogRawStrings.exporting, mapping, func, version)
         if not mapping in __RPC_FUNCTIONS[version]:
             __RPC_FUNCTIONS[version].update(item)
-            logger.debug(
-                f"Export function: {func}, mapping: {mapping}, version: {version}"
-            )
+        else:
+            logger.warning(LogRawStrings.exported, mapping)
         return func
 
     # export(test1, test)
